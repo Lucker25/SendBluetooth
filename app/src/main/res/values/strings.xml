@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">SendBluetooth</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="none_paired">Keine Geräte verbunden</string>
+    <string name="none_found">Keine Geräte gefdunden</string>
+
+
+</resources>
