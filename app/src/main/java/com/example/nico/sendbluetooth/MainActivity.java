@@ -83,7 +83,7 @@ public class MainActivity extends Activity {
         CountDownTimer Timer = new CountDownTimer(1000, 10) {
             public void onTick(long millisUntilFinished) {
 
-                if (is_connected) {
+                /*if (is_connected) {
                     if (TouchListener != null && LastSend != TouchListener) {
                         senden(null, TouchListener);
                         Log.i("Connection", "Sende: " + TouchListener);
@@ -92,12 +92,14 @@ public class MainActivity extends Activity {
 
                         //Log.i("Connection", "Sende: " + TouchListener);
                     }
-                }
+                }*/
+
             }
             public void onFinish() {
+                //handshake();
                 if (is_connected) {
-                    senden(null, "h");
-                    empfangen = empfangen(null);
+                    senden("h");
+                    empfangen = empfangen();
 
                     if (empfangen.indexOf("Handshake") != -1) {
                         Log.i("Handshake", "Zurücksetzen " + verbindung_counter);
@@ -107,9 +109,9 @@ public class MainActivity extends Activity {
                         Log.i("Handshake", "Missing " + verbindung_counter);
                     }
 
-                    if (verbindung_counter > 10) {
+                    if (verbindung_counter > 3) { //5 Sek Timeout
                         Log.w("Connection", "Handshake error");
-                        senden(null, "X");
+                        senden("X");
                         trennen(null);
                         verbindung_counter = 0;
 
@@ -128,9 +130,11 @@ public class MainActivity extends Activity {
                 if (action == MotionEvent.ACTION_DOWN) {
                     Log.i("Movement", "S.ACTION_DOWN");
                     TouchListener = "S";
+                    senden("S");
                 } else if (action == MotionEvent.ACTION_UP) {
                     Log.i("Movement", "S.ACTION_UP");
                     TouchListener = null;
+                    senden("X");
                 }
                 return false;
             }
@@ -144,9 +148,11 @@ public class MainActivity extends Activity {
                 if (action == MotionEvent.ACTION_DOWN) {
                     Log.i("Movement", "W.ACTION_DOWN");
                     TouchListener = "W";
+                    senden("W");
                 } else if (action == MotionEvent.ACTION_UP) {
                     Log.i("Movement", "W.ACTION_UP");
                     TouchListener = null;
+                    senden("X");
                 }
                 return false;
             }
@@ -160,9 +166,11 @@ public class MainActivity extends Activity {
                 if (action == MotionEvent.ACTION_DOWN) {
                     Log.i("Movement", "A.ACTION_DOWN");
                     TouchListener = "A";
+                    senden("A");
                 } else if (action == MotionEvent.ACTION_UP) {
                     Log.i("Movement", "A.ACTION_UP");
                     TouchListener = null;
+                    senden("X");
                 }
                 return false;
             }
@@ -176,9 +184,11 @@ public class MainActivity extends Activity {
                 if (action == MotionEvent.ACTION_DOWN) {
                     Log.i("Movement", "D.ACTION_DOWN");
                     TouchListener = "D";
+                    senden("D");
                 } else if (action == MotionEvent.ACTION_UP) {
                     Log.i("Movement", "D.ACTION_UP");
                     TouchListener = null;
+                    senden("X");
                 }
                 return false;
             }
@@ -215,13 +225,10 @@ public class MainActivity extends Activity {
                     speed = "G" + progress + "Z" + progress + "E";
                 }
                 Log.i(LOG_TAG, "Speed: " + speed);
-                senden(null, speed);
-
-                //Toast.makeText(getApplicationContext(), "Stopped tracking seekbar", Toast.LENGTH_SHORT).show();
+                senden(speed);
             }
 
         });
-
 
 //--------------------------------------------------------------------------------------------------Verbindung zu Bluetooth Adapter herstellen
         Log.d(LOG_TAG, "Bluetest: OnCreate");
@@ -237,14 +244,35 @@ public class MainActivity extends Activity {
             Log.d(LOG_TAG, "onCreate: Bluetooth-Adapter ist bereit");
     }
 //--------------------------------------------------------------------------------------------------Ende OnCreate
+    //----------------------------------------------------------------------------------------------Handshake
+    private void handshake() {
+        if (is_connected) {
+            senden("h");
 
-//----------------------------------------------------------Verbinden Button
+
+            if (empfangen.indexOf("Handshake") != -1) {
+                Log.i("Handshake", "Zurücksetzen " + verbindung_counter);
+                verbindung_counter = 0;
+            } else {
+                verbindung_counter++;
+                Log.i("Handshake", "Missing " + verbindung_counter);
+            }
+
+            if (verbindung_counter > 3) { //5 Sek Timeout
+                Log.w("Connection", "Handshake error");
+                senden("X");
+                trennen(null);
+                verbindung_counter = 0;
+
+            }
+        }
+    }
+    //----------------------------------------------------------Verbinden Button
     public void verbinden(View v) {
         // Start DeviceListActivity
         Intent serverIntent = new Intent(this, DeviceListActivity.class);
         startActivityForResult(serverIntent, REQUEST_CONNECT);
     }
-
     //----------------------------------------------------------------------------------------------onActivityResult
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.i(LOG_TAG, "RequestCode: " + requestCode + "REQUEST_CONNECT" + REQUEST_CONNECT);
@@ -260,8 +288,7 @@ public class MainActivity extends Activity {
                 }
         }
     }
-
-//--------------------------------------------------------------------------------------------------Connect
+    //--------------------------------------------------------------------------------------------------Connect
     public void connect() {
 
         Log.d(LOG_TAG, "Verbinde mit " + mac_adresse);
@@ -329,7 +356,7 @@ public class MainActivity extends Activity {
         }
     }
     //----------------------------------------------------------------------------------------------Text Senden
-    public void senden(View v, String message) {
+    public void senden(String message) {
         byte[] msgBuffer = message.getBytes();
         LastSend = message;
         if (is_connected) {
@@ -347,9 +374,8 @@ public class MainActivity extends Activity {
             }
         }
     }
-
-//--------------------------------------------------------------------------------------------------Empfangen
-    public String empfangen(View v) {
+    //--------------------------------------------------------------------------------------------------Empfangen
+    public String empfangen() {
         byte[] buffer = new byte[1024]; // Puffer
         int laenge; // Anzahl empf. Bytes
         String msg = "";
@@ -375,7 +401,7 @@ public class MainActivity extends Activity {
     }
     //----------------------------------------------------------------------------------------------Verbindung trennen
     public void trennen(View v) {
-        senden(null, "X");
+        senden("X");
         if (is_connected && stream_out != null) {
             is_connected = false;
             ((Button) findViewById(R.id.bt_verbinden))
