@@ -64,12 +64,12 @@ public class MainActivity extends Activity {
         super.onStart();
         Log.i("TEST", "OnStart");
         // If Bluetooth is not on, request that it be enabled.
-        if (adapter.isEnabled()) {
+       /* if (adapter.isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         } else {
             onDestroy();
-        }
+        }*/
     }
 
     //----------------------------------------------------------------------------------------------OnCreate
