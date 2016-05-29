@@ -31,6 +31,7 @@ import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.example.nico.sendbluetooth.MainActivity.AutoState;
 
 import com.example.nico.sendbluetooth.R;
 
@@ -58,6 +59,19 @@ public class MainActivity extends Activity {
     private String empfangen;
     private String LastSend = null;
     private String regler_parameter = "0";
+    private boolean automatik = false;
+    private AutoState autoState = AutoState.Forward;
+    private int dir = 0;
+    private int duration = 0;
+    private int stateCounterFast = 0;
+    private int stateCounterSlow = 0;
+
+
+
+    enum AutoState{
+        Forward, Backward, Turn
+    }
+
 
     //----------------------------------------------------------------------------------------------OnStart
     @Override
@@ -84,6 +98,51 @@ public class MainActivity extends Activity {
         CountDownTimer Timer = new CountDownTimer(1000, 10) {
             public void onTick(long millisUntilFinished) {
 
+
+                if (is_connected && automatik) {
+                    empfangen = empfangen();
+                    if (empfangen.contains("Taster")){
+                        autoState=AutoState.Backward;
+                        senden("B");
+                    }
+                    stateCounterFast++;
+                    //-----------------------------------------------------Automatik ablauf
+                    if (stateCounterFast == 20) { // 200 ms
+                        stateCounterFast = 0;
+
+                        if (autoState == AutoState.Forward) {
+                            senden("W");
+                        }
+                        if (autoState == AutoState.Backward) {
+                            senden("S");
+                            stateCounterSlow++;
+                            if (stateCounterSlow == 4) {
+                                autoState = AutoState.Turn;
+                                stateCounterSlow = 0;
+                            }
+                        }
+                        if (autoState == AutoState.Turn) {
+                            if (stateCounterSlow == 0) {
+                                dir = (int) (Math.random() * 2);
+                                duration = (int) (Math.random() * 3) + 2;
+                            }
+                            //------------------------Nach rechts Drehen
+                            if (dir == 0) {
+                                senden("D");
+                            }
+                            //------------------------Nach links Drehen
+                            if (dir == 1) {
+                                senden("A");
+                            }
+                            stateCounterSlow++;
+                            if (stateCounterSlow == duration) {
+                                autoState = AutoState.Forward;
+                                stateCounterSlow = 0;
+                            }
+                        }
+                    }
+
+                }
 
             }
             public void onFinish() {
@@ -235,28 +294,27 @@ public class MainActivity extends Activity {
             Log.d(LOG_TAG, "onCreate: Bluetooth-Adapter ist bereit");
     }
 //--------------------------------------------------------------------------------------------------Ende OnCreate
-    //----------------------------------------------------------------------------------------------Handshake
-    private void handshake() {
-        if (is_connected) {
-            senden("h");
-
-
-            if (empfangen.indexOf("Handshake") != -1) {
-                Log.i("Handshake", "Zurücksetzen " + verbindung_counter);
-                verbindung_counter = 0;
-            } else {
-                verbindung_counter++;
-                Log.i("Handshake", "Missing " + verbindung_counter);
-            }
-
-            if (verbindung_counter > 3) { //5 Sek Timeout
-                Log.w("Connection", "Handshake error");
-                senden("X");
-                trennen(null);
-                verbindung_counter = 0;
-
-            }
+    public void autoMode(View v){
+        if (automatik == false) {
+            automatik = true;
+            ((Button) findViewById(R.id.btn_Auto)).setBackgroundColor(Color.GREEN);
+            ((ImageButton) findViewById(R.id.Forward)).setVisibility(View.INVISIBLE);
+            ((ImageButton) findViewById(R.id.Backward)).setVisibility(View.INVISIBLE);
+            ((ImageButton) findViewById(R.id.Left)).setVisibility(View.INVISIBLE);
+            ((ImageButton) findViewById(R.id.Right)).setVisibility(View.INVISIBLE);
+            senden("X");//Bewegung zuücksetzen
         }
+        else if(automatik == true){
+            automatik = false;
+            ((Button) findViewById(R.id.btn_Auto)).setBackgroundColor(Color.LTGRAY);
+            ((ImageButton) findViewById(R.id.Forward)).setVisibility(View.VISIBLE);
+            ((ImageButton) findViewById(R.id.Backward)).setVisibility(View.VISIBLE);
+            ((ImageButton) findViewById(R.id.Left)).setVisibility(View.VISIBLE);
+            ((ImageButton) findViewById(R.id.Right)).setVisibility(View.VISIBLE);
+            senden("X");//Bewegung zuücksetzen
+        }
+
+
     }
     //---------------------------------------------------------Reglerparameter senden
     public void send_parameter(View v){
