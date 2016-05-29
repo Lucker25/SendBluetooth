@@ -57,6 +57,7 @@ public class MainActivity extends Activity {
     private String speed = "0";
     private String empfangen;
     private String LastSend = null;
+    private String regler_parameter = "0";
 
     //----------------------------------------------------------------------------------------------OnStart
     @Override
@@ -83,16 +84,6 @@ public class MainActivity extends Activity {
         CountDownTimer Timer = new CountDownTimer(1000, 10) {
             public void onTick(long millisUntilFinished) {
 
-                /*if (is_connected) {
-                    if (TouchListener != null && LastSend != TouchListener) {
-                        senden(null, TouchListener);
-                        Log.i("Connection", "Sende: " + TouchListener);
-                    } else if (TouchListener == null && LastSend != "X") {
-                        senden(null, "X");
-
-                        //Log.i("Connection", "Sende: " + TouchListener);
-                    }
-                }*/
 
             }
             public void onFinish() {
@@ -112,7 +103,7 @@ public class MainActivity extends Activity {
                     if (verbindung_counter > 3) { //5 Sek Timeout
                         Log.w("Connection", "Handshake error");
                         senden("X");
-                        trennen(null);
+                        //trennen(null);
                         verbindung_counter = 0;
 
                     }
@@ -266,6 +257,16 @@ public class MainActivity extends Activity {
 
             }
         }
+    }
+    //---------------------------------------------------------Reglerparameter senden
+    public void send_parameter(View v){
+        EditText text_P = (EditText) findViewById(R.id.editText_P);
+        EditText text_I = (EditText) findViewById(R.id.editText_I);
+        EditText text_D = (EditText) findViewById(R.id.editText_D);
+        regler_parameter = "R" + text_P.getText() + "Z" + text_I.getText() + "Y" + text_D.getText();
+
+        Log.i(LOG_TAG, "Regler: " + regler_parameter);
+        senden(regler_parameter);
     }
     //----------------------------------------------------------Verbinden Button
     public void verbinden(View v) {
